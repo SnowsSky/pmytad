@@ -284,7 +284,8 @@ func main() {
 					}
 				}
 			}
+		default:
+			println("Archive "+archive+" not supported (yet?). Skipping...")
 		}
-
 	}
 }
