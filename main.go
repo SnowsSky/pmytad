@@ -2,14 +2,14 @@ package main
 
 import (
 	"archive/tar"
-	"io"
-	"path"
-	"compress/gzip"
 	"compress/bzip2"
-	"github.com/ulikunitz/xz"
+	"compress/gzip"
 	"errors"
+	"github.com/ulikunitz/xz"
+	"io"
 	"io/fs"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -21,7 +21,7 @@ func main() {
 	for _, archive := range os.Args[1:] {
 		archiveFile, err := os.OpenFile(archive, os.O_RDONLY, 0755)
 		if errors.Is(err, fs.ErrNotExist) {
-			println("Archive "+archive+" not found. Skipping...")
+			println("Archive " + archive + " not found. Skipping...")
 			continue
 		}
 		if err != nil {
@@ -29,11 +29,11 @@ func main() {
 		}
 
 		var baseName string
-		switch(path.Ext(archive)) {
+		switch path.Ext(archive) {
 		case ".gz":
 			reader, err := gzip.NewReader(archiveFile)
 			if err == io.EOF {
-				println("Archive "+archive+" empty. Skipping")
+				println("Archive " + archive + " empty. Skipping")
 				continue
 			}
 			if err != nil {
@@ -44,12 +44,12 @@ func main() {
 			tarReader := tar.NewReader(reader)
 			hdr, err := tarReader.Next()
 			if err == io.EOF {
-				println("Archive "+archive+" empty. Skipping...")
+				println("Archive " + archive + " empty. Skipping...")
 				continue
 			}
 			if hdr.Typeflag == tar.TypeDir {
 				if err = os.Mkdir(hdr.Name, hdr.FileInfo().Mode().Perm()); err != nil {
-					println("Couldn't make "+hdr.Name+" folder for archive "+archive+". Skipping...")
+					println("Couldn't make " + hdr.Name + " folder for archive " + archive + ". Skipping...")
 					continue
 				}
 				for {
@@ -62,13 +62,13 @@ func main() {
 					}
 					if hdr.Typeflag == tar.TypeDir {
 						if err = os.Mkdir(hdr.Name, hdr.FileInfo().Mode().Perm()); err != nil {
-							println("Couldn't create directory "+hdr.Name+". Skipping this archive...")
+							println("Couldn't create directory " + hdr.Name + ". Skipping this archive...")
 							continue
 						}
 					} else {
-						outFile, err := os.OpenFile(hdr.Name, os.O_WRONLY | os.O_CREATE, hdr.FileInfo().Mode().Perm())
+						outFile, err := os.OpenFile(hdr.Name, os.O_WRONLY|os.O_CREATE, hdr.FileInfo().Mode().Perm())
 						if err != nil {
-							println("Couldn't open file "+hdr.Name+" in archive. Skipping this archive...")
+							println("Couldn't open file " + hdr.Name + " in archive. Skipping this archive...")
 							continue
 						}
 						if _, err = io.Copy(outFile, tarReader); err != nil {
@@ -82,9 +82,9 @@ func main() {
 				if err = os.Mkdir(baseName, 0755); err != nil {
 					panic(err)
 				}
-				outFile, err := os.OpenFile(path.Join(baseName, hdr.Name), os.O_WRONLY | os.O_CREATE, hdr.FileInfo().Mode().Perm())
+				outFile, err := os.OpenFile(path.Join(baseName, hdr.Name), os.O_WRONLY|os.O_CREATE, hdr.FileInfo().Mode().Perm())
 				if err != nil {
-					println("Couldn't open file "+path.Join(baseName, hdr.Name)+" in archive. Skipping this archive...")
+					println("Couldn't open file " + path.Join(baseName, hdr.Name) + " in archive. Skipping this archive...")
 					continue
 				}
 				if _, err = io.Copy(outFile, tarReader); err != nil {
@@ -102,13 +102,13 @@ func main() {
 					}
 					if hdr.Typeflag == tar.TypeDir {
 						if err = os.Mkdir(path.Join(baseName, hdr.Name), hdr.FileInfo().Mode().Perm()); err != nil {
-							println("Couldn't create directory "+path.Join(baseName, hdr.Name)+". Skipping this archive...")
+							println("Couldn't create directory " + path.Join(baseName, hdr.Name) + ". Skipping this archive...")
 							continue
 						}
 					} else {
-						outFile, err = os.OpenFile(path.Join(baseName, hdr.Name), os.O_WRONLY | os.O_CREATE, hdr.FileInfo().Mode().Perm())
+						outFile, err = os.OpenFile(path.Join(baseName, hdr.Name), os.O_WRONLY|os.O_CREATE, hdr.FileInfo().Mode().Perm())
 						if err != nil {
-							println("Couldn't open file "+path.Join(baseName, hdr.Name)+" in archive. Skipping this archive...")
+							println("Couldn't open file " + path.Join(baseName, hdr.Name) + " in archive. Skipping this archive...")
 							continue
 						}
 						if _, err = io.Copy(outFile, tarReader); err != nil {
@@ -125,12 +125,12 @@ func main() {
 			tarReader := tar.NewReader(reader)
 			hdr, err := tarReader.Next()
 			if err == io.EOF {
-				println("Archive "+archive+" empty. Skipping...")
+				println("Archive " + archive + " empty. Skipping...")
 				continue
 			}
 			if hdr.Typeflag == tar.TypeDir {
 				if err = os.Mkdir(hdr.Name, hdr.FileInfo().Mode().Perm()); err != nil {
-					println("Couldn't make "+hdr.Name+" folder for archive "+archive+". Skipping...")
+					println("Couldn't make " + hdr.Name + " folder for archive " + archive + ". Skipping...")
 					continue
 				}
 				for {
@@ -143,13 +143,13 @@ func main() {
 					}
 					if hdr.Typeflag == tar.TypeDir {
 						if err = os.Mkdir(hdr.Name, hdr.FileInfo().Mode().Perm()); err != nil {
-							println("Couldn't create directory "+hdr.Name+". Skipping this archive...")
+							println("Couldn't create directory " + hdr.Name + ". Skipping this archive...")
 							continue
 						}
 					} else {
-						outFile, err := os.OpenFile(hdr.Name, os.O_WRONLY | os.O_CREATE, hdr.FileInfo().Mode().Perm())
+						outFile, err := os.OpenFile(hdr.Name, os.O_WRONLY|os.O_CREATE, hdr.FileInfo().Mode().Perm())
 						if err != nil {
-							println("Couldn't open file "+hdr.Name+" in archive. Skipping this archive...")
+							println("Couldn't open file " + hdr.Name + " in archive. Skipping this archive...")
 							continue
 						}
 						if _, err = io.Copy(outFile, tarReader); err != nil {
@@ -163,9 +163,9 @@ func main() {
 				if err = os.Mkdir(baseName, 0755); err != nil {
 					panic(err)
 				}
-				outFile, err := os.OpenFile(path.Join(baseName, hdr.Name), os.O_WRONLY | os.O_CREATE, hdr.FileInfo().Mode().Perm())
+				outFile, err := os.OpenFile(path.Join(baseName, hdr.Name), os.O_WRONLY|os.O_CREATE, hdr.FileInfo().Mode().Perm())
 				if err != nil {
-					println("Couldn't open file "+path.Join(baseName, hdr.Name)+" in archive. Skipping this archive...")
+					println("Couldn't open file " + path.Join(baseName, hdr.Name) + " in archive. Skipping this archive...")
 					continue
 				}
 				if _, err = io.Copy(outFile, tarReader); err != nil {
@@ -183,13 +183,13 @@ func main() {
 					}
 					if hdr.Typeflag == tar.TypeDir {
 						if err = os.Mkdir(path.Join(baseName, hdr.Name), hdr.FileInfo().Mode().Perm()); err != nil {
-							println("Couldn't create directory "+path.Join(baseName, hdr.Name)+". Skipping this archive...")
+							println("Couldn't create directory " + path.Join(baseName, hdr.Name) + ". Skipping this archive...")
 							continue
 						}
 					} else {
-						outFile, err = os.OpenFile(path.Join(baseName, hdr.Name), os.O_WRONLY | os.O_CREATE, hdr.FileInfo().Mode().Perm())
+						outFile, err = os.OpenFile(path.Join(baseName, hdr.Name), os.O_WRONLY|os.O_CREATE, hdr.FileInfo().Mode().Perm())
 						if err != nil {
-							println("Couldn't open file "+path.Join(baseName, hdr.Name)+" in archive. Skipping this archive...")
+							println("Couldn't open file " + path.Join(baseName, hdr.Name) + " in archive. Skipping this archive...")
 							continue
 						}
 						if _, err = io.Copy(outFile, tarReader); err != nil {
@@ -209,12 +209,12 @@ func main() {
 			tarReader := tar.NewReader(reader)
 			hdr, err := tarReader.Next()
 			if err == io.EOF {
-				println("Archive "+archive+" empty. Skipping...")
+				println("Archive " + archive + " empty. Skipping...")
 				continue
 			}
 			if hdr.Typeflag == tar.TypeDir {
 				if err = os.Mkdir(hdr.Name, hdr.FileInfo().Mode().Perm()); err != nil {
-					println("Couldn't make "+hdr.Name+" folder for archive "+archive+". Skipping...")
+					println("Couldn't make " + hdr.Name + " folder for archive " + archive + ". Skipping...")
 					continue
 				}
 				for {
@@ -227,13 +227,13 @@ func main() {
 					}
 					if hdr.Typeflag == tar.TypeDir {
 						if err = os.Mkdir(hdr.Name, hdr.FileInfo().Mode().Perm()); err != nil {
-							println("Couldn't create directory "+hdr.Name+". Skipping this archive...")
+							println("Couldn't create directory " + hdr.Name + ". Skipping this archive...")
 							continue
 						}
 					} else {
-						outFile, err := os.OpenFile(hdr.Name, os.O_WRONLY | os.O_CREATE, hdr.FileInfo().Mode().Perm())
+						outFile, err := os.OpenFile(hdr.Name, os.O_WRONLY|os.O_CREATE, hdr.FileInfo().Mode().Perm())
 						if err != nil {
-							println("Couldn't open file "+hdr.Name+" in archive. Skipping this archive...")
+							println("Couldn't open file " + hdr.Name + " in archive. Skipping this archive...")
 							continue
 						}
 						if _, err = io.Copy(outFile, tarReader); err != nil {
@@ -247,9 +247,9 @@ func main() {
 				if err = os.Mkdir(baseName, 0755); err != nil {
 					panic(err)
 				}
-				outFile, err := os.OpenFile(path.Join(baseName, hdr.Name), os.O_WRONLY | os.O_CREATE, hdr.FileInfo().Mode().Perm())
+				outFile, err := os.OpenFile(path.Join(baseName, hdr.Name), os.O_WRONLY|os.O_CREATE, hdr.FileInfo().Mode().Perm())
 				if err != nil {
-					println("Couldn't open file "+path.Join(baseName, hdr.Name)+" in archive. Skipping this archive...")
+					println("Couldn't open file " + path.Join(baseName, hdr.Name) + " in archive. Skipping this archive...")
 					continue
 				}
 				if _, err = io.Copy(outFile, tarReader); err != nil {
@@ -267,13 +267,13 @@ func main() {
 					}
 					if hdr.Typeflag == tar.TypeDir {
 						if err = os.Mkdir(path.Join(baseName, hdr.Name), hdr.FileInfo().Mode().Perm()); err != nil {
-							println("Couldn't create directory "+path.Join(baseName, hdr.Name)+". Skipping this archive...")
+							println("Couldn't create directory " + path.Join(baseName, hdr.Name) + ". Skipping this archive...")
 							continue
 						}
 					} else {
-						outFile, err = os.OpenFile(path.Join(baseName, hdr.Name), os.O_WRONLY | os.O_CREATE, hdr.FileInfo().Mode().Perm())
+						outFile, err = os.OpenFile(path.Join(baseName, hdr.Name), os.O_WRONLY|os.O_CREATE, hdr.FileInfo().Mode().Perm())
 						if err != nil {
-							println("Couldn't open file "+path.Join(baseName, hdr.Name)+" in archive. Skipping this archive...")
+							println("Couldn't open file " + path.Join(baseName, hdr.Name) + " in archive. Skipping this archive...")
 							continue
 						}
 						if _, err = io.Copy(outFile, tarReader); err != nil {
@@ -285,7 +285,7 @@ func main() {
 				}
 			}
 		default:
-			println("Archive "+archive+" not supported (yet?). Skipping...")
+			println("Archive " + archive + " not supported (yet?). Skipping...")
 		}
 	}
 }
