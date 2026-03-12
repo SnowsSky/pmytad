@@ -1,0 +1,128 @@
+package main
+
+import (
+	"archive/tar"
+	"io"
+	"path"
+	"compress/gzip"
+	"compress/bzip2"
+	"errors"
+	"io/fs"
+	"os"
+	"strings"
+)
+
+func main() {
+	if len(os.Args) == 1 {
+		println("No archives given, exiting...")
+		os.Exit(0)
+	}
+	for _, archive := range os.Args[1:] {
+		archiveFile, err := os.OpenFile(archive, os.O_RDONLY, 0755)
+		if errors.Is(err, fs.ErrNotExist) {
+			println("Archive "+archive+" not found. Skipping...")
+			continue
+		}
+		if err != nil {
+			panic(err)
+		}
+
+		var reader any
+		var baseName string
+		switch(path.Ext(archive)) {
+		case ".gz":
+			reader, err = gzip.NewReader(archiveFile)
+			if err == io.EOF {
+				println("Archive "+archive+" empty. Skipping")
+				continue
+			}
+			if err != nil {
+				panic(err)
+			}
+			baseName = strings.TrimSuffix(archive, ".tar.gz")
+			continue
+		case ".bz2":
+			reader = bzip2.NewReader(archiveFile)
+			baseName = strings.TrimSuffix(archive, ".tar.bz2")
+		}
+
+		tarReader := tar.NewReader(reader.(io.Reader))
+		hdr, err := tarReader.Next()
+		if err == io.EOF {
+			println("Archive "+archive+" empty. Skipping...")
+			continue
+		}
+		if hdr.Typeflag == tar.TypeDir {
+			if err = os.Mkdir(hdr.Name, hdr.FileInfo().Mode().Perm()); err != nil {
+				println("Couldn't make "+hdr.Name+" folder for archive "+archive+". Skipping...")
+				continue
+			}
+			for {
+				hdr, err = tarReader.Next()
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					panic(err)
+				}
+				if hdr.Typeflag == tar.TypeDir {
+					if err = os.Mkdir(hdr.Name, hdr.FileInfo().Mode().Perm()); err != nil {
+						println("Couldn't create directory "+hdr.Name+". Skipping this archive...")
+						continue
+					}
+				} else {
+					outFile, err := os.OpenFile(hdr.Name, os.O_WRONLY | os.O_CREATE, hdr.FileInfo().Mode().Perm())
+					if err != nil {
+						println("Couldn't open file "+hdr.Name+" in archive. Skipping this archive...")
+						continue
+					}
+					if _, err = io.Copy(outFile, tarReader); err != nil {
+						outFile.Close()
+						panic(err)
+					}
+					outFile.Close()
+				}
+			}
+		} else {
+			if err = os.Mkdir(baseName, 0755); err != nil {
+				panic(err)
+			}
+			outFile, err := os.OpenFile(hdr.Name, os.O_WRONLY | os.O_CREATE, hdr.FileInfo().Mode().Perm())
+			if err != nil {
+				println("Couldn't open file "+hdr.Name+" in archive. Skipping this archive...")
+				continue
+			}
+			if _, err = io.Copy(outFile, tarReader); err != nil {
+				outFile.Close()
+				panic(err)
+			}
+			outFile.Close()
+			for {
+				hdr, err = tarReader.Next()
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					panic(err)
+				}
+				if hdr.Typeflag == tar.TypeDir {
+					if err = os.Mkdir(hdr.Name, hdr.FileInfo().Mode().Perm()); err != nil {
+						println("Couldn't create directory "+hdr.Name+". Skipping this archive...")
+						continue
+					}
+				} else {
+					outFile, err = os.OpenFile(hdr.Name, os.O_WRONLY | os.O_CREATE, hdr.FileInfo().Mode().Perm())
+					if err != nil {
+						println("Couldn't open file "+hdr.Name+" in archive. Skipping this archive...")
+						continue
+					}
+					if _, err = io.Copy(outFile, tarReader); err != nil {
+						outFile.Close()
+						panic(err)
+					}
+					outFile.Close()
+				}
+			}
+		}
+	}
+}
