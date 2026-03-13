@@ -1,6 +1,7 @@
 package main
 
 import (
+	// "archive/zip"
 	"archive/tar"
 	"compress/bzip2"
 	"compress/gzip"
@@ -284,6 +285,20 @@ func main() {
 					}
 				}
 			}
+		// case ".zip":
+		// 	fileStats, err := archiveFile.Stat()
+		// 	if err != nil {
+		// 		panic(err)
+		// 	}
+		// 	zipReader, err := zip.NewReader(archiveFile, fileStats.Size())
+		// 	zipReader.
+		// 	if err == io.EOF {
+		// 		println(archive+" is empty. Skipping...")
+		// 		continue
+		// 	}
+		// 	if err != nil {
+		// 		panic(err)
+		// 	}
 		default:
 			println("Archive " + archive + " not supported (yet?). Skipping...")
 		}
