@@ -6,13 +6,45 @@ import (
 	"compress/bzip2"
 	"compress/gzip"
 	"errors"
-	"github.com/ulikunitz/xz"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/charmbracelet/x/term"
+	"github.com/ulikunitz/xz"
 )
+
+var files int
+var currentFile int
+
+func progressBar(fileName string) {
+	width, _, err := term.GetSize(os.Stdout.Fd())
+	if err != nil {
+		width = 30
+	}
+	percent := currentFile * 100 / files
+	prefix := fmt.Sprintf("(%d/%d) Extracting %s [", currentFile, files, fileName)
+	suffix := fmt.Sprintf("] %d%%", percent)
+	barLength := width - len(prefix) - len(suffix) - 3
+	if barLength < 5 {
+		barLength = 1
+	}
+	if barLength > 30 {
+		barLength = 30
+	}
+	filled := percent * barLength / 100
+
+	bar := strings.Repeat("#", filled)
+
+	if filled < barLength {
+		bar += strings.Repeat(" ", barLength-filled-1)
+	}
+
+	fmt.Printf("\r\033[2K(%d/%d) Extracting %s [%s] %d%%", currentFile, files, fileName, bar, percent)
+}
 
 func main() {
 	if len(os.Args) == 1 {
@@ -48,12 +80,32 @@ func main() {
 				println("Archive " + archive + " empty. Skipping...")
 				continue
 			}
+			for {
+				files++
+				_, err = tarReader.Next()
+				if err == io.EOF {
+					break
+				}
+			}
+			_, err = archiveFile.Seek(0, io.SeekStart)
+			if err != nil {
+				panic(err)
+			}
+
+			reader, err = gzip.NewReader(archiveFile)
+			if err != nil {
+				panic(err)
+			}
+			tarReader = tar.NewReader(reader)
+			hdr, err = tarReader.Next()
 			if hdr.Typeflag == tar.TypeDir {
 				if err = os.Mkdir(hdr.Name, hdr.FileInfo().Mode().Perm()); err != nil {
 					println("Couldn't make " + hdr.Name + " folder for archive " + archive + ". Skipping...")
 					continue
 				}
 				for {
+					currentFile++
+					progressBar(hdr.Name)
 					hdr, err = tarReader.Next()
 					if err == io.EOF {
 						break
@@ -94,6 +146,8 @@ func main() {
 				}
 				outFile.Close()
 				for {
+					currentFile++
+					progressBar(hdr.Name)
 					hdr, err = tarReader.Next()
 					if err == io.EOF {
 						break
@@ -129,12 +183,29 @@ func main() {
 				println("Archive " + archive + " empty. Skipping...")
 				continue
 			}
+			for {
+				files++
+				_, err = tarReader.Next()
+				if err == io.EOF {
+					break
+				}
+			}
+			_, err = archiveFile.Seek(0, io.SeekStart)
+			if err != nil {
+				panic(err)
+			}
+
+			reader = bzip2.NewReader(archiveFile)
+			tarReader = tar.NewReader(reader)
+			hdr, err = tarReader.Next()
 			if hdr.Typeflag == tar.TypeDir {
 				if err = os.Mkdir(hdr.Name, hdr.FileInfo().Mode().Perm()); err != nil {
 					println("Couldn't make " + hdr.Name + " folder for archive " + archive + ". Skipping...")
 					continue
 				}
 				for {
+					currentFile++
+					progressBar(hdr.Name)
 					hdr, err = tarReader.Next()
 					if err == io.EOF {
 						break
@@ -175,6 +246,8 @@ func main() {
 				}
 				outFile.Close()
 				for {
+					currentFile++
+					progressBar(hdr.Name)
 					hdr, err = tarReader.Next()
 					if err == io.EOF {
 						break
@@ -209,16 +282,38 @@ func main() {
 			baseName = strings.TrimSuffix(archive, ".tar.xz")
 			tarReader := tar.NewReader(reader)
 			hdr, err := tarReader.Next()
+
 			if err == io.EOF {
 				println("Archive " + archive + " empty. Skipping...")
 				continue
 			}
+			for {
+				files++
+				_, err = tarReader.Next()
+				if err == io.EOF {
+					break
+				}
+			}
+			_, err = archiveFile.Seek(0, io.SeekStart)
+			if err != nil {
+				panic(err)
+			}
+
+			reader, err = xz.NewReader(archiveFile)
+			if err != nil {
+				panic(err)
+			}
+			tarReader = tar.NewReader(reader)
+			hdr, err = tarReader.Next()
+
 			if hdr.Typeflag == tar.TypeDir {
 				if err = os.Mkdir(hdr.Name, hdr.FileInfo().Mode().Perm()); err != nil {
 					println("Couldn't make " + hdr.Name + " folder for archive " + archive + ". Skipping...")
 					continue
 				}
 				for {
+					currentFile++
+					progressBar(hdr.Name)
 					hdr, err = tarReader.Next()
 					if err == io.EOF {
 						break
@@ -259,6 +354,8 @@ func main() {
 				}
 				outFile.Close()
 				for {
+					currentFile++
+					progressBar(hdr.Name)
 					hdr, err = tarReader.Next()
 					if err == io.EOF {
 						break
